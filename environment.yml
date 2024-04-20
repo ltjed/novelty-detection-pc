@@ -1,0 +1,17 @@
+name: cov-env
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python=3.8
+  - numpy
+  - pytorch
+  - torchvision
+  - cudatoolkit=11.3
+  - matplotlib
+  - tqdm
+  - git
+  - seaborn
+  - scipy
+  - brewer2mpl
+prefix: /data/ndcn-computational-neuroscience/scro4155/myenv
