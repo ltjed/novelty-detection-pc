@@ -46,7 +46,7 @@ def add_panel_letters(axes, x_nudge = 0.12, y_nudge = 0.05, fontsize=24, font='A
                     fontsize=fontsize, fontname=font, fontweight=fontweight)
 
 def plot_separability(sub_path, sep_12, sep_23, n_layers=2):
-    plt.figure(figsize=(6, 4.5))
+    plt.figure(figsize=(4, 3))
     plt.title(f"d' separability between classes of digits by layers")
     
     avg12, yerr12 = calculate_errorbars(sep_12, axis=0)
