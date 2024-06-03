@@ -1,0 +1,5 @@
+results/*
+data/*
+src/__pycache__/*
+src.egg-info/*
+.vs/*
