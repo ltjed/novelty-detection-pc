@@ -1,4 +1,4 @@
-name: cov-env
+name: nd-env
 channels:
   - defaults
   - conda-forge
@@ -14,4 +14,3 @@ dependencies:
   - seaborn
   - scipy
   - brewer2mpl
-prefix: /data/ndcn-computational-neuroscience/scro4155/myenv
