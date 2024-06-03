@@ -11,13 +11,13 @@ def hopfield_energy(pattern, X):
     energy = 0
     W = torch.matmul(X.t(), X)
     # W.fill_diagonal_(0)
-    energy = - torch.matmul(torch.matmul(pattern, W), pattern.t())
+    energy = - torch.diag(torch.matmul(torch.matmul(pattern, W), pattern.t()))
     return energy
 
 # an implementation of MCHN's energy function
 def dense_associative_energy(pattern, X, a=3):
     energies = torch.matmul(X, pattern.t())
-    energy = - torch.logsumexp(energies, 0) + torch.matmul(pattern, pattern.t())*0.5
+    energy = - torch.logsumexp(energies, 0) + torch.diag(torch.matmul(pattern, pattern.t())) * 0.5
     return energy
 
 # The following method is used to replicate Standing (1973)'s experiment results (i.e., the power-law relationship).
