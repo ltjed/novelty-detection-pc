@@ -70,6 +70,9 @@ class RecPCN(nn.Module):
 
         return delta_X
 
+    def error_neurons(self, X):
+        return torch.linalg.norm((X - self.forward(X)), dim=0)
+
     def energy(self, X):
         """Calculate the energy value of the implicit model given a batch of input
         Aka the squared error
@@ -141,6 +144,13 @@ class MultilayerPCN(nn.Module):
     def update_grads(self):
         raise NotImplementedError()
 
+    def error_neurons(self):
+        return torch.cat(
+            [
+                torch.linalg.norm(self.errs[l], dim=0) for l in range(self.n_layers)
+            ]
+        )   
+        
     def train_pc_generative(self, batch_inp, n_iters, update_mask, penalty=0):
         self.initialize()
         self.set_nodes(batch_inp)
@@ -152,25 +162,24 @@ class MultilayerPCN(nn.Module):
     def test_pc_generative(self, corrupt_inp, n_iters, update_mask, sensory=True):
         self.initialize()
         self.set_nodes(corrupt_inp)
+        energies = []
         for itr in range(n_iters):
             self.update_val_nodes(update_mask, recon=False) # no need to relax sensory layer for ND/RM so I changed recon to False
-
-        if sensory:
-            return self.val_nodes[-1]
-        else:
-            return self.preds[-1]
+            energies.append(self.energy().item())
+        return energies
         
     def energy(self):
         """Function to obtain the sum of all layers' squared MSE"""
         total_energy = 0
         for l in range(self.n_layers):
-            total_energy += torch.sum(self.errs[l] ** 2)
+            total_energy += torch.mean(self.errs[l] ** 2)
         return total_energy
     
     def layered_energy(self):
-        energy_by_layer = np.empty(self.n_layers)
+        bsz = self.val_nodes[0].shape[0]
+        energy_by_layer = np.empty((bsz, self.n_layers))
         for l in range(self.n_layers):
-            energy_by_layer[l] = torch.sum(self.errs[l] ** 2)
+            energy_by_layer[:, l] = torch.mean(self.errs[l] ** 2, dim=1).detach().cpu().numpy()
         return energy_by_layer
     
 class HierarchicalPCN(MultilayerPCN):

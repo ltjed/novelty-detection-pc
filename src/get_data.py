@@ -94,15 +94,15 @@ def get_tiny_imagenet(datapath, sample_size, sample_size_test, batch_size, seed,
     for batch_idx, (data, targ) in enumerate(train_loader):
         X.append(data)
         y.append(targ)
-    X = torch.cat(X, dim=0).to(device) # size, c, 64, 64
-    y = torch.cat(y, dim=0).to(device)
+    X = torch.cat(X, dim=0) # size, c, 64, 64
+    y = torch.cat(y, dim=0)
 
     X_test, y_test = [], []
     for batch_idx, (data, targ) in enumerate(test_loader):
         X_test.append(data)
         y_test.append(targ)
-    X_test = torch.cat(X_test, dim=0).to(device) # size, c, 64, 64
-    y_test = torch.cat(y_test, dim=0).to(device)
+    X_test = torch.cat(X_test, dim=0) # size, c, 64, 64
+    y_test = torch.cat(y_test, dim=0)
 
     return (X, y), (X_test, y_test)
 
@@ -262,15 +262,15 @@ def get_mnist(datapath, sample_size, sample_size_test, batch_size, seed, device,
     for batch_idx, (data, targ) in enumerate(train_loader):
         X.append(data)
         y.append(targ)
-    X = torch.cat(X, dim=0).to(device)
-    y = torch.cat(y, dim=0).to(device)
+    X = torch.cat(X, dim=0)
+    y = torch.cat(y, dim=0)
 
     X_test, y_test = [], []
     for batch_idx, (data, targ) in enumerate(test_loader):
         X_test.append(data)
         y_test.append(targ)
-    X_test = torch.cat(X_test, dim=0).to(device)
-    y_test = torch.cat(y_test, dim=0).to(device)
+    X_test = torch.cat(X_test, dim=0)
+    y_test = torch.cat(y_test, dim=0)
 
     if binary:
         X[X > 0.5] = 1
