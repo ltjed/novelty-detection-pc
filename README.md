@@ -27,9 +27,9 @@ Specifically:
 - To obtain results with Figure 4 in the manuscript, run `recurrent_PCN.py` and `hPCN.py`;
 - To obtain results with Figure 5 in the manuscript, run `recurrent_PCN.py` and `hopfield.py`;
 - To obtain results with Figure 6 in the manuscript, run `theory.ipynb`;
-- To obtain results with Figure 7 in the manuscript, run `locallyy_connected_hPCN.py`;
+- To obtain results with Figure 7 in the manuscript, run `locally_connected_hPCN.py`;
 
-A directory named `results` will then be created to store all the data and figures collected from the experiments.
+A directory named `results` will then be created to store all the data collected from the experiments. You can then use the `visualization.ipynb` to generate the figures. 
 
 ## 4. Contact
 For any inquiries or questions regarding the project, please feel free to contact Ed Tianjin Li at <tianjin.li@hertford.ox.ac.uk> or Mufeng Tang at <mufeng.tang@ndcn.ox.ac.uk>.
