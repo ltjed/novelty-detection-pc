@@ -19,15 +19,23 @@ from datetime import datetime
 device = "cuda:0" if torch.cuda.is_available() else "cpu"
 print(device)
 
-
 save_dir = os.path.join('results', 'hierarchical_models')
 if not os.path.exists(save_dir):
     os.makedirs(save_dir)
 
 nonlin = 'Tanh' # 'Tanh' to replicate Fig.7
 dataset = 'mnist'; dimension = 784 # set to 'mnist' to replicate Fig.7
+
 base_class = [4]; test_class = [5] # set to [4] and [5] to replicate Fig.7, can be set to other classes, too
+# Create a unique folder name with base_class and test_class
+folder_name = f"base_{'_'.join(map(str, base_class))}_test_{'_'.join(map(str, test_class))}"
+save_dir = os.path.join(save_dir, folder_name)
+# Create the directory if it doesn't exist
+if not os.path.exists(save_dir):
+    os.makedirs(save_dir)
+
 n_layers = 2 # adjust the number of hidden layers; 2 for hPCN
+
 
 hidden_sizes = [200, 400] # adjust the number of neurons in each hidden layer
 kernel_sizes = [0, 9]

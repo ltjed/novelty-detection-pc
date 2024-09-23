@@ -77,6 +77,9 @@ def get_tiny_imagenet(datapath, sample_size, sample_size_test, batch_size, seed,
         transforms.ToTensor(),
     ])
 
+    if not os.path.exists(datapath):
+        os.makedirs(datapath)
+
     train = TinyImageNet(root_dir=datapath, is_train=True, transform=transform, download=True)
     test = TinyImageNet(root_dir=datapath, is_train=False, transform=transform, download=True)
 
