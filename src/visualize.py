@@ -104,7 +104,6 @@ def plot_weights(result_path, pcn, n_layers=2):
     accumulated_weight_np = pcn.layers[n_layers-1].weight.cpu().detach().numpy()
     for k in range(n_layers):
         j = layer_convert(k)
-        # 
         weight_matrix_np = pcn.layers[j].weight.cpu().detach().numpy()
         if j < n_layers-1:
             accumulated_weight_np = accumulated_weight_np @ weight_matrix_np
@@ -115,7 +114,8 @@ def plot_weights(result_path, pcn, n_layers=2):
         w = h
         # Wmin, Wmax = np.min(weight_matrix_np), np.max(weight_matrix_np)
         # fig, axes = plt.subplots(d_out // 32, 32, figsize=(8, (d_out // 32) // 4))
-        fig, axes = plt.subplots(d_out // 4, 4, figsize=(4, (d_out // 2)))
+        # fig, axes = plt.subplots(d_out // 20, 20, figsize=(80, (d_out // 80)))
+        fig, axes = plt.subplots(d_out // 20, 20)
         # fig, axes = plt.subplots(d_out // 16, 16, figsize=(8, (d_out // 16) // 4))
         for i, ax in enumerate(axes.flatten()):
             f = weight_matrix_np[:, i]
@@ -123,9 +123,9 @@ def plot_weights(result_path, pcn, n_layers=2):
             im = ax.imshow(f.reshape((h, w)), cmap='gray', vmin=Wmin, vmax=Wmax)
             ax.axis('off')
         fig.colorbar(im, ax=axes.ravel().tolist())
-        fig.suptitle(f'weights between layer {j} and {j+1}')
+        fig.suptitle(f'receptive fields of layer {int(2-j)}')
         # fig.tight_layout()
-        plt.savefig(result_path + f'W between layer {j} and {j+1}.pdf', format = 'pdf' , bbox_inches='tight')
+        plt.savefig(result_path + f'/receptive fields of layer {int(2-j)}.pdf', format = 'pdf', bbox_inches='tight')
         plt.close()
 
 def layer_convert(l_in, n_layers=2):

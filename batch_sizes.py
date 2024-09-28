@@ -26,29 +26,33 @@ if not os.path.exists(save_dir):
 parser = argparse.ArgumentParser(description="rPCN for novelty detection")
 parser.add_argument("--dataset", type=str, default="gaussian", help="Dataset to use")
 parser.add_argument("--learning_lr", type=float, default=3e-4, help="Learning rate")
-parser.add_argument("--epochs", type=int, default=200, help="Number of epochs")
+# parser.add_argument("--epochs", type=int, default=200, help="Number of epochs")
+parser.add_argument("--epochs", type=int, default=50, help="Number of epochs")
 parser.add_argument("--num_seeds", type=int, default=5, help="Number of seeds")
 parser.add_argument(
     "--b", type=float, default=0, help="Covariance between any two distinct pixels"
 )
 args = parser.parse_args()
 
-# sample_sizes = [4000, 10000]
-# sample_sizes = [1]
-sample_sizes = [20, 40, 100, 200, 400, 1000, 4000, 10000]
 
-size_dict = {"gaussian": 500, "mnist": 784, "tinyimagenet": 4096}
-dimension = size_dict[args.dataset]
+
+
+dimension = 500
+sample_size = 10000
+batch_sizes = [1, 10, 100, 1000, 10000]
+# batch_sizes = [1, 4, 10, 40, 100, 400, 1000, 4000, 10000]
+learning_lrs = [1e-5, 3e-5, 1e-4, 2e-4, 3e-4]
+
 prob = 0.5 + args.b / 2
 save_every = args.epochs // 2
 
-PCN_error_probs = np.zeros((len(sample_sizes), args.num_seeds))
-for k, sample_size in enumerate(sample_sizes):
-    batch_size = sample_size
+PCN_error_probs = np.zeros((len(batch_sizes), args.num_seeds))
+
+for k, batch_size in enumerate(batch_sizes):
+    learning_lr = learning_lrs[k]
     energies = np.zeros((args.num_seeds, args.epochs))
     for seed in range(args.num_seeds):
-        print(f"Sample size: {sample_size}, Seed: {seed}")
-        err_neurons = np.zeros((args.epochs // save_every + 1, size_dict[args.dataset]))
+        err_neurons = np.zeros((args.epochs // save_every + 1, dimension))
 
         if args.dataset == "gaussian":
             cov = np.ones((dimension, dimension)) * args.b
@@ -67,8 +71,10 @@ for k, sample_size in enumerate(sample_sizes):
                 seed=seed,
                 device=device,
             )
+            print(X.shape, X_test.shape)
             X = X.reshape((X.shape[0], -1)).float()
             X_test = X_test.reshape((X_test.shape[0], -1)).float()
+            print(X.shape, X_test.shape)
 
         # train model
         pcn = RecPCN(dimension, dendrite=False, mode="linear").to(device)
@@ -112,14 +118,24 @@ for k, sample_size in enumerate(sample_sizes):
         energy_nov = pcn.energy(X_test.to(device)).detach().cpu().numpy()
         comparison = compare_novelty(energy_nov, energy_fam)
         PCN_error_probs[k, seed] = 1 - np.mean(comparison)
+        
+print(f'batch_sizes: {batch_sizes}')
+print(f"PCN_error_probs: {PCN_error_probs}")
 
 # save results
 np.save(
     os.path.join(
         save_dir,
-        f'PCN_error_probs_{args.dataset}_b_{str(args.b).replace(".", "")}.npy',
+        f'batch_size_error_probs.npy',
     ),
     PCN_error_probs,
 )
-np.save(os.path.join(save_dir, f"energies_evolution.npy"), energies)
-np.save(os.path.join(save_dir, f"error_neurons.npy"), err_neurons)
+np.save(
+    os.path.join(
+        save_dir,
+        f'batch_sizes.npy',
+    ),
+    batch_sizes,
+)
+
+

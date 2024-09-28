@@ -48,6 +48,6 @@ def separability(signal, noise):
     pooled_std = np.sqrt(((n_signal - 1) * s_signal**2 + (n_noise - 1) * s_noise**2) / (n_signal + n_noise - 2))
     
     # Calculate d'
-    d_prime = (mu_signal - mu_noise) / pooled_std
+    d_prime = abs(mu_signal - mu_noise) / pooled_std
     
     return d_prime

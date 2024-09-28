@@ -227,7 +227,7 @@ class ConvolutionalPCN(MultilayerPCN):
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         for l in range(self.n_layers-1):
             print("layer:", l)
-            # set the stride to 0 if there is no limit on the receptive field
+            # set the stride to 0 if there is no limit on the receptive field, i.e., kernei_size = 0
             if strides[l] == 0:
                 # self.masks.append(torch.ones(round(nodes[l+1]**0.5), round(nodes[l]**0.5)))
                 # self.masks.append(torch.ones(nodes[l+1], nodes[l]).to(self.device))

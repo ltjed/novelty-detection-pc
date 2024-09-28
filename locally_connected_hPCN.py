@@ -26,9 +26,20 @@ if not os.path.exists(save_dir):
 nonlin = 'Tanh' # 'Tanh' to replicate Fig.7
 dataset = 'mnist'; dimension = 784 # set to 'mnist' to replicate Fig.7
 
-base_class = [4]; test_class = [5] # set to [4] and [5] to replicate Fig.7, can be set to other classes, too
+is_fully_connected = False # set to False for locally connected hPCN
+
+# base_class = [4]; test_class = [5] # set to [4] and [5] to replicate Fig.7, can be set to other classes, too
+# alternative figures in supplementary material
+# base_class = [4]; test_class = [9]
+# base_class = [4]; test_class = [1]
+base_class = [3,4,8]; test_class = [5]
+# base_class = [2,3,4,5,6,7,8,9,0]; test_class = [1]
+
 # Create a unique folder name with base_class and test_class
-folder_name = f"base_{'_'.join(map(str, base_class))}_test_{'_'.join(map(str, test_class))}"
+if is_fully_connected:
+    folder_name = f"base_{'_'.join(map(str, base_class))}_test_{'_'.join(map(str, test_class))}_fully_connected"
+else:
+    folder_name = f"base_{'_'.join(map(str, base_class))}_test_{'_'.join(map(str, test_class))}"
 save_dir = os.path.join(save_dir, folder_name)
 # Create the directory if it doesn't exist
 if not os.path.exists(save_dir):
@@ -38,8 +49,10 @@ n_layers = 2 # adjust the number of hidden layers; 2 for hPCN
 
 
 hidden_sizes = [200, 400] # adjust the number of neurons in each hidden layer
-kernel_sizes = [0, 9]
+kernel_sizes = [0, 9] # any neuron in layer 2 is connected to all neurons is layer 1; any neuron in layer 1 is connected to a 9 by 9 patch of neurons in layer 0
 strides = [0, 1]
+
+
 padding = 0
 paddings = [padding] * n_layers
 
@@ -59,26 +72,42 @@ epochs = 2000 # number of learning iterations; set to 4000 to replicate Fig.7
 decay_step_size = 10
 decay_gamma = 1
 
+# parameters used for a fully connected hPCN
+if is_fully_connected:
+    kernel_sizes = [0, 0] 
+    strides = [0, 0] 
+    learning_lr = 8e-5
+    epochs = 1500
+
 # separability measures
 separability_12 = np.zeros((len(seeds), n_layers+1)) # sensory (pixel) novelty
 separability_23 = np.zeros((len(seeds), n_layers+1)) # semantic (digit for mnist) novelty
 
+digit_sample_size = sample_size//len(base_class) # number of samples per digit in the training set/base_class
 for seed in seeds:
-    # X: train 4, X_test: test 4, Y_test: test 5
-    (X, _), (X_test, _) = get_mnist(
-        './data', 
-        sample_size=sample_size, 
-        sample_size_test=sample_size,
-        batch_size=batch_size, 
-        seed=seed, 
-        device=device,
-        binary=False,
-        classes=base_class
-    )
+    sorted_X = []
+    sorted_X_test = []
+    for digit in base_class:
+        (X, _), (X_test, _) = get_mnist(
+            './data', 
+            sample_size=digit_sample_size, 
+            sample_size_test=digit_sample_size,
+            batch_size=batch_size, 
+            seed=seed, 
+            device=device,
+            binary=False,
+            classes=base_class
+        )
+        sorted_X.append(X)
+        sorted_X_test.append(X_test)
+    X = torch.cat(sorted_X, dim=0)
+    X_test = torch.cat(sorted_X_test, dim=0)
+
+    # unseen digit
     (_, _), (Y_test, _) = get_mnist(
         './data', 
-        sample_size=sample_size, 
-        sample_size_test=sample_size,
+        sample_size=digit_sample_size, 
+        sample_size_test=digit_sample_size,
         batch_size=batch_size, 
         seed=seed, 
         device=device,
@@ -120,30 +149,51 @@ for seed in seeds:
 
     plt.figure()
     plt.plot(train_energy)
-    plt.savefig(os.path.join(save_dir, f"train_energy.png"))
+    plt.savefig(os.path.join(save_dir, f"train_energy_seed_{seed}.png"))
     plt.close()
 
     # evaluate energy/novelty
     test_inf_iters = 50
     pcn.Dt = 0.1
-    test_energy = pcn.test_pc_generative(X.to(device), test_inf_iters, update_mask)
-    energy_fam = pcn.layered_energy()
-    pcn.test_pc_generative(X_test.to(device), test_inf_iters, update_mask)
-    energy_nov = pcn.layered_energy()
-    pcn.test_pc_generative(Y_test.to(device), test_inf_iters, update_mask)
-    energy_test_nov = pcn.layered_energy()
 
-    plt.figure()
-    plt.plot(test_energy)
-    plt.savefig(os.path.join(save_dir, f"test_energy.png"))
-    plt.close()
+    if len(base_class) == 1:
+        test_energy = pcn.test_pc_generative(sorted_X[digit_index].to(device), test_inf_iters, update_mask)
+        energy_fam = pcn.layered_energy()
+        pcn.test_pc_generative(sorted_X_test[digit_index].to(device), test_inf_iters, update_mask)
+        energy_nov = pcn.layered_energy()
+        pcn.test_pc_generative(Y_test.to(device), test_inf_iters, update_mask)
+        energy_test_nov = pcn.layered_energy()
+        plt.figure()
+        plt.plot(test_energy)
+        plt.savefig(os.path.join(save_dir, f"test_energy_seed_{seed}.png"))
+        plt.close()
+        for l in range(n_layers+1):
+            separability_12[seed, l] = separability(energy_nov[:, l], energy_fam[:, l])
+            separability_23[seed, l] = separability(energy_test_nov[:, l], energy_fam[:, l])
+    else:
+        separability_12 = np.zeros((len(base_class), len(seeds), n_layers+1))
+        separability_23 = np.zeros((len(base_class), len(seeds), n_layers+1))
+        energy_fam = np.empty((sample_size, n_layers+1))
+        for digit_index, digit in enumerate(base_class):
+            test_energy = pcn.test_pc_generative(sorted_X[digit_index].to(device), test_inf_iters, update_mask)
+            energy_fam = pcn.layered_energy()
+            pcn.test_pc_generative(sorted_X_test[digit_index].to(device), test_inf_iters, update_mask)
+            energy_nov = pcn.layered_energy()
+            pcn.test_pc_generative(Y_test.to(device), test_inf_iters, update_mask)
+            energy_test_nov = pcn.layered_energy()
 
-    # d prime
-    for l in range(n_layers+1):
-        separability_12[seed, l] = separability(energy_nov[:, l], energy_fam[:, l])
-        separability_23[seed, l] = separability(energy_test_nov[:, l], energy_fam[:, l])
+            # calculate d_prime separability between different sets of MNIST images
+            # separate the training set by digit if there are multiple base classes
+            for l in range(n_layers+1): 
+                separability_12[digit_index, seed, l] = separability(energy_nov[:, l], energy_fam[:, l])
+                separability_23[digit_index, seed, l] = separability(energy_test_nov[:, l], energy_fam[:, l])
+            
+                
+# plot & save the receptive fields of each layer
+plot_weights(save_dir, pcn)
 
 # save energy and separability
+
 np.savez(
     os.path.join(save_dir, f'energy.npz'), 
     energy_fam=energy_fam, 
@@ -151,9 +201,10 @@ np.savez(
     energy_test_nov=energy_test_nov,
 )
 np.savez(
-    os.path.join(save_dir, f'separability.npz'), 
-    separability_12=separability_12, 
-    separability_23=separability_23,
-)
+        os.path.join(save_dir, f'separability.npz'), 
+        separability_12=separability_12, 
+        separability_23=separability_23,
+    )
+
 
 
