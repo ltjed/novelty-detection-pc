@@ -80,14 +80,18 @@ if is_fully_connected:
     epochs = 1500
 
 # separability measures
-separability_12 = np.zeros((len(seeds), n_layers+1)) # sensory (pixel) novelty
-separability_23 = np.zeros((len(seeds), n_layers+1)) # semantic (digit for mnist) novelty
+if len(base_class) == 1:
+    separability_12 = np.zeros((len(seeds), n_layers+1))
+    separability_23 = np.zeros((len(seeds), n_layers+1)) 
+else:
+    separability_12 = np.zeros((len(base_class), len(seeds), n_layers+1))
+    separability_23 = np.zeros((len(base_class), len(seeds), n_layers+1))
 
 digit_sample_size = sample_size//len(base_class) # number of samples per digit in the training set/base_class
 for seed in seeds:
     sorted_X = []
     sorted_X_test = []
-    for digit in base_class:
+    for digit_index, digit in enumerate(base_class):
         (X, _), (X_test, _) = get_mnist(
             './data', 
             sample_size=digit_sample_size, 
@@ -96,12 +100,17 @@ for seed in seeds:
             seed=seed, 
             device=device,
             binary=False,
-            classes=base_class
+            classes=[base_class[digit_index]]
         )
+        X = X.reshape((X.shape[0], -1)).float()
+        X_test = X_test.reshape((X_test.shape[0], -1)).float()
         sorted_X.append(X)
         sorted_X_test.append(X_test)
+
     X = torch.cat(sorted_X, dim=0)
     X_test = torch.cat(sorted_X_test, dim=0)
+
+    print(X.shape, X_test.shape)
 
     # unseen digit
     (_, _), (Y_test, _) = get_mnist(
@@ -114,9 +123,6 @@ for seed in seeds:
         binary=False,
         classes=test_class
     )
-
-    X = X.reshape((X.shape[0], -1)).float()
-    X_test = X_test.reshape((X_test.shape[0], -1)).float()
     Y_test = Y_test.reshape((Y_test.shape[0], -1)).float()
 
     nodes = hidden_sizes + [784]
@@ -171,9 +177,7 @@ for seed in seeds:
             separability_12[seed, l] = separability(energy_nov[:, l], energy_fam[:, l])
             separability_23[seed, l] = separability(energy_test_nov[:, l], energy_fam[:, l])
     else:
-        separability_12 = np.zeros((len(base_class), len(seeds), n_layers+1))
-        separability_23 = np.zeros((len(base_class), len(seeds), n_layers+1))
-        energy_fam = np.empty((sample_size, n_layers+1))
+        # energy_fam = np.empty((sample_size, n_layers+1))
         for digit_index, digit in enumerate(base_class):
             test_energy = pcn.test_pc_generative(sorted_X[digit_index].to(device), test_inf_iters, update_mask)
             energy_fam = pcn.layered_energy()
@@ -187,12 +191,12 @@ for seed in seeds:
             for l in range(n_layers+1): 
                 separability_12[digit_index, seed, l] = separability(energy_nov[:, l], energy_fam[:, l])
                 separability_23[digit_index, seed, l] = separability(energy_test_nov[:, l], energy_fam[:, l])
-            
-                
+
 # plot & save the receptive fields of each layer
 plot_weights(save_dir, pcn)
 
 # save energy and separability
+
 
 np.savez(
     os.path.join(save_dir, f'energy.npz'), 
