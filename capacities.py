@@ -34,10 +34,10 @@ parser.add_argument(
 args = parser.parse_args()
 
 
-sample_sizes = np.logspace(4, 15, 45, base=2).astype(int)
-
+sample_sizes = np.logspace(4, 15, 23, base=2).astype(int)
 dimensions = np.logspace(6, 10, 9, base=2).astype(int)
-
+# sample_sizes = np.linspace(8000,20000,49).astype(int)
+# dimensions = np.linspace(500,1000,11).astype(int)
 # records the capacity of the PCN for each dimension/network size 
 # a value of -1 indicating that the PCN has not yet reached a capacity for largest value in sample_sizes
 capacities = np.zeros(len(dimensions))
@@ -125,6 +125,8 @@ for j, dimension in enumerate(dimensions):
             else:
                 capacities[j] = sample_sizes[k-1]
             break
+
+
 print(f"dimensions: {dimensions}")
 print(f"capacities: {capacities}")
 print(f"PCN_error_probs: {PCN_error_probs}")

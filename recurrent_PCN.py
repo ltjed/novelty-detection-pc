@@ -24,7 +24,7 @@ if not os.path.exists(save_dir):
     os.makedirs(save_dir)
 
 parser = argparse.ArgumentParser(description="rPCN for novelty detection")
-parser.add_argument("--dataset", type=str, default="gaussian", help="Dataset to use")
+parser.add_argument("--dataset", type=str, default="tinyimagenet", help="Dataset to use")
 parser.add_argument("--learning_lr", type=float, default=3e-4, help="Learning rate")
 parser.add_argument("--epochs", type=int, default=200, help="Number of epochs")
 parser.add_argument("--num_seeds", type=int, default=5, help="Number of seeds")
@@ -95,6 +95,11 @@ for k, sample_size in enumerate(sample_sizes):
                 err_neurons[(i + 1) // save_every] = (
                     pcn.error_neurons(data).detach().cpu().numpy()
                 )
+
+        def count_parameters(model):
+            return sum(p.numel() for p in model.parameters() if p.requires_grad)
+        
+        print(f"Number of parameters: {count_parameters(pcn)}")
 
         plt.figure()
         plt.plot(train_mses)
