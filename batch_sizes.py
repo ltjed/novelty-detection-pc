@@ -27,7 +27,7 @@ parser = argparse.ArgumentParser(description="rPCN for novelty detection")
 parser.add_argument("--dataset", type=str, default="gaussian", help="Dataset to use")
 parser.add_argument("--learning_lr", type=float, default=3e-4, help="Learning rate")
 # parser.add_argument("--epochs", type=int, default=200, help="Number of epochs")
-parser.add_argument("--epochs", type=int, default=50, help="Number of epochs")
+parser.add_argument("--epochs", type=int, default=200, help="Number of epochs")
 parser.add_argument("--num_seeds", type=int, default=5, help="Number of seeds")
 parser.add_argument(
     "--b", type=float, default=0, help="Covariance between any two distinct pixels"

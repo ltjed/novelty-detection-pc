@@ -26,13 +26,13 @@ if not os.path.exists(save_dir):
 nonlin = 'Tanh' # 'Tanh' to replicate Fig.7
 dataset = 'mnist'; dimension = 784 # set to 'mnist' to replicate Fig.7
 
-is_fully_connected = False # set to False for locally connected hPCN
+is_fully_connected = True # set to False for locally connected hPCN
 
-# base_class = [4]; test_class = [5] # set to [4] and [5] to replicate Fig.7, can be set to other classes, too
+base_class = [4]; test_class = [5] # set to [4] and [5] to replicate Fig.7, can be set to other classes, too
 # alternative figures in supplementary material
 # base_class = [4]; test_class = [9]
 # base_class = [4]; test_class = [1]
-base_class = [3,4,8]; test_class = [5]
+# base_class = [3,4,8]; test_class = [5]
 # base_class = [2,3,4,5,6,7,8,9,0]; test_class = [1]
 
 # Create a unique folder name with base_class and test_class
@@ -210,5 +210,7 @@ np.savez(
         separability_23=separability_23,
     )
 
-
+# Print the number of parameters in the model
+total_params = sum(p.numel() for p in pcn.parameters())
+print(f"Total number of parameters in the model: {total_params}")
 
