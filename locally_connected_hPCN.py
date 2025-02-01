@@ -28,11 +28,11 @@ dataset = 'mnist'; dimension = 784 # set to 'mnist' to replicate Fig.7
 
 is_fully_connected = True # set to False for locally connected hPCN
 
-base_class = [4]; test_class = [5] # set to [4] and [5] to replicate Fig.7, can be set to other classes, too
+# base_class = [4]; test_class = [9] # set to [4] and [5] to replicate Fig.7, can be set to other classes, too
 # alternative figures in supplementary material
 # base_class = [4]; test_class = [9]
 # base_class = [4]; test_class = [1]
-# base_class = [3,4,8]; test_class = [5]
+base_class = [3,4,8]; test_class = [5]
 # base_class = [2,3,4,5,6,7,8,9,0]; test_class = [1]
 
 # Create a unique folder name with base_class and test_class
@@ -79,6 +79,8 @@ if is_fully_connected:
     learning_lr = 8e-5
     epochs = 1500
 
+
+
 # separability measures
 if len(base_class) == 1:
     separability_12 = np.zeros((len(seeds), n_layers+1))
@@ -86,6 +88,11 @@ if len(base_class) == 1:
 else:
     separability_12 = np.zeros((len(base_class), len(seeds), n_layers+1))
     separability_23 = np.zeros((len(base_class), len(seeds), n_layers+1))
+
+    # each collects the energy for a different digit in base_class in the same order
+    e_fam = np.zeros((len(base_class), len(seeds), n_layers+1))
+    e_nov = np.zeros((len(base_class), len(seeds), n_layers+1))
+    e_test_nov = np.zeros((len(base_class), len(seeds), n_layers+1))
 
 digit_sample_size = sample_size//len(base_class) # number of samples per digit in the training set/base_class
 for seed in seeds:
@@ -185,18 +192,24 @@ for seed in seeds:
             energy_nov = pcn.layered_energy()
             pcn.test_pc_generative(Y_test.to(device), test_inf_iters, update_mask)
             energy_test_nov = pcn.layered_energy()
+            
+            # append energy values to the corresponding lists
+            e_fam[digit_index,:,:] = energy_fam
+            e_nov[digit_index,:,:] = energy_nov
+            e_test_nov[digit_index,:,:] = energy_test_nov
 
             # calculate d_prime separability between different sets of MNIST images
             # separate the training set by digit if there are multiple base classes
             for l in range(n_layers+1): 
                 separability_12[digit_index, seed, l] = separability(energy_nov[:, l], energy_fam[:, l])
                 separability_23[digit_index, seed, l] = separability(energy_test_nov[:, l], energy_fam[:, l])
+        # change the names of the lists to be saved after iterating over lists of digits
+        energy_fam = e_fam
+        energy_nov = e_nov
+        energy_test_nov = e_test_nov
 
 # plot & save the receptive fields of each layer
 plot_weights(save_dir, pcn)
-
-# save energy and separability
-
 
 np.savez(
     os.path.join(save_dir, f'energy.npz'), 
