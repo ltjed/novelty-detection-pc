@@ -26,14 +26,14 @@ if not os.path.exists(save_dir):
 nonlin = 'Tanh' # 'Tanh' to replicate Fig.7
 dataset = 'mnist'; dimension = 784 # set to 'mnist' to replicate Fig.7
 
-is_fully_connected = True # set to False for locally connected hPCN
+is_fully_connected = False # set to False for locally connected hPCN
 
 # base_class = [4]; test_class = [9] # set to [4] and [5] to replicate Fig.7, can be set to other classes, too
 # alternative figures in supplementary material
 # base_class = [4]; test_class = [9]
 # base_class = [4]; test_class = [1]
-base_class = [3,4,8]; test_class = [5]
-# base_class = [2,3,4,5,6,7,8,9,0]; test_class = [1]
+# base_class = [3,4,8]; test_class = [5]
+base_class = [2,3,4,5,6,7,8,9,0]; test_class = [1]
 
 # Create a unique folder name with base_class and test_class
 if is_fully_connected:
@@ -80,6 +80,7 @@ if is_fully_connected:
     epochs = 1500
 
 
+digit_sample_size = sample_size//len(base_class) # number of samples per digit in the training set/base_class
 
 # separability measures
 if len(base_class) == 1:
@@ -90,11 +91,10 @@ else:
     separability_23 = np.zeros((len(base_class), len(seeds), n_layers+1))
 
     # each collects the energy for a different digit in base_class in the same order
-    e_fam = np.zeros((len(base_class), len(seeds), n_layers+1))
-    e_nov = np.zeros((len(base_class), len(seeds), n_layers+1))
-    e_test_nov = np.zeros((len(base_class), len(seeds), n_layers+1))
+    e_fam = np.zeros((len(base_class), digit_sample_size, n_layers+1))
+    e_nov = np.zeros((len(base_class), digit_sample_size, n_layers+1))
+    e_test_nov = np.zeros((len(base_class), digit_sample_size, n_layers+1))
 
-digit_sample_size = sample_size//len(base_class) # number of samples per digit in the training set/base_class
 for seed in seeds:
     sorted_X = []
     sorted_X_test = []
